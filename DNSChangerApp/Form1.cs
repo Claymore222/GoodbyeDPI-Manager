@@ -10,11 +10,13 @@ namespace DNSChangerApp
 {
     public partial class Form1 : Form
     {
-        // Global Değişkenler
+
         private bool gercekCikis = false;
         private string hedefKlasor = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "MyGoodbyeDPI");
         private string exeYolu;
-        private string uygulamaAdi = "GoodbyeDPI_Manager"; 
+        private string uygulamaAdi = "GoodbyeDPI_Manager";
+        private string gorevAdi = "DNSChangerApp_Startup";
+        private bool formYukleniyor = true;
 
         public Form1()
         {
@@ -25,7 +27,7 @@ namespace DNSChangerApp
         {
             try
             {
-                // 1. Dosyaları Hazırla
+
                 if (!Directory.Exists(hedefKlasor)) Directory.CreateDirectory(hedefKlasor);
 
                 DosyaCikar("goodbyedpi.exe", Path.Combine(hedefKlasor, "goodbyedpi.exe"));
@@ -40,9 +42,15 @@ namespace DNSChangerApp
             {
                 MessageBox.Show("Başlangıç hatası: " + ex.Message);
             }
+
+            formYukleniyor = false;
+
+
         }
 
-        // --- YARDIMCI FONKSİYONLAR ---
+
+
+
 
         private void KomutCalistir(string komut)
         {
@@ -73,7 +81,7 @@ namespace DNSChangerApp
             }
         }
 
-        // --- TİMER İLE SÜREKLİ KONTROL ---
+
         private void timer1_Tick(object sender, EventArgs e)
         {
             Process[] processes = Process.GetProcessesByName("goodbyedpi");
@@ -90,32 +98,53 @@ namespace DNSChangerApp
             }
         }
 
-        // --- WINDOWS İLE BAŞLAT ---
+
         private void BaslangicDurumunuKontrolEt()
         {
             try
             {
-                RegistryKey key = Registry.CurrentUser.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Run", true);
-                if (key.GetValue(uygulamaAdi) != null)
+                ProcessStartInfo processInfo = new ProcessStartInfo("cmd.exe", $"/c schtasks /query /tn \"{gorevAdi}\"");
+                processInfo.CreateNoWindow = true;
+                processInfo.UseShellExecute = false;
+
+                Process process = Process.Start(processInfo);
+                process.WaitForExit();
+
+                if (process.ExitCode == 0)
                 {
                     chkBaslangic.Checked = true;
                 }
+                else
+                {
+                    chkBaslangic.Checked = false;
+                }
             }
-            catch { }
+            catch
+            {
+                chkBaslangic.Checked = false;
+            }
         }
 
         private void chkBaslangic_CheckedChanged(object sender, EventArgs e)
         {
+
+            if (formYukleniyor) return;
+
             try
             {
-                RegistryKey key = Registry.CurrentUser.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Run", true);
+                string exePath = Application.ExecutablePath;
+
                 if (chkBaslangic.Checked)
                 {
-                    key.SetValue(uygulamaAdi, "\"" + Application.ExecutablePath + "\"");
+
+                    string komut = $"schtasks /create /tn \"{gorevAdi}\" /tr \"\\\"{exePath}\\\"\" /sc onlogon /rl highest /f";
+                    KomutCalistir(komut);
                 }
                 else
                 {
-                    key.DeleteValue(uygulamaAdi, false);
+                    // Görevi sil
+                    string komut = $"schtasks /delete /tn \"{gorevAdi}\" /f";
+                    KomutCalistir(komut);
                 }
             }
             catch (Exception ex)
@@ -135,7 +164,7 @@ namespace DNSChangerApp
         }
 
 
-        // --- BUTONLAR ---
+
 
         private void btnAc_Click(object sender, EventArgs e)
         {
@@ -157,7 +186,7 @@ namespace DNSChangerApp
             KomutCalistir("sc stop \"WinDivert\" && sc delete \"WinDivert\"");
         }
 
-        // --- SİSTEM TEPSİSİ VE KAPATMA ---
+
 
         private void Form1_FormClosing(object sender, FormClosingEventArgs e)
         {
@@ -205,5 +234,6 @@ namespace DNSChangerApp
             gercekCikis = true;
             Application.Exit();
         }
+
     }
 }
