@@ -46,3 +46,6 @@ Bu yazılım, *GoodbyeDPI* çekirdeğini (goodbyedpi.exe, WinDivert.dll/sys) ken
 Bu yazılım; eğitim, araştırma ve bilgiye erişim özgürlüğü amaçlarıyla, açık kaynak kodlu projeler temel alınarak geliştirilmiştir. Yazılımın kullanımından doğabilecek her türlü yasal sorumluluk son kullanıcıya aittir.
 
 License: Apache-2.0 (GoodbyeDPI-Turkey temel alınmıştır).
+
+
+https://claytstudio.com/dnschangerapp/
